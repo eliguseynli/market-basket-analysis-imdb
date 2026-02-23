@@ -32,15 +32,11 @@ To run the notebook:
 4. Results and runtime analysis will be reproduced.
 
 ## Repository Structure
-market-basket-imdb/
-│
-├── market_basket_imdb.ipynb
-├── report/
-│ ├── report.tex
-│ ├── report.pdf
-│ ├── runtime_plot.png
-│
-└── README.md
+- `market_basket_imdb.ipynb`
+- `report/report.tex`
+- `report/report.pdf`
+- `report/runtime_plot.png`
+- `README.md`
 
 ## Reproducibility
 
