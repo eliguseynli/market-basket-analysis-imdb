@@ -1,0 +1,94 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title{Market-Basket Analysis on IMDB Top 1000 Movies (Actors as Items)}
+\author{Ali Huseynli}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Dataset}
+We use the \textit{IMDB Dataset of Top 1000 Movies and TV Shows} published on Kaggle under the CC0-1.0 (Public Domain) license.
+Each row corresponds to one movie. In this project, a movie is treated as a basket/transaction, while actors listed in columns \texttt{Star1}, \texttt{Star2}, \texttt{Star3}, \texttt{Star4} are treated as items.
+
+\section{Data Organization}
+The dataset is downloaded directly in the notebook using the Kaggle API.
+After downloading and unzipping, we load the CSV file \texttt{imdb\_top\_1000.csv} using pandas.
+Transactions are stored as a Python list of lists, where each inner list contains actor names for one movie.
+
+\section{Pre-processing}
+We apply a minimal cleaning:
+\begin{itemize}
+  \item strip whitespace from actor names;
+  \item ignore missing values (NaN);
+  \item remove duplicates inside a basket (just in case the same actor appears twice).
+\end{itemize}
+We also include an optional subsampling switch (\texttt{USE\_SUB}) to run experiments on smaller subsets while keeping the code compatible with the full dataset.
+
+\section{Algorithm and Implementation}
+We implement a frequent itemset mining approach inspired by ECLAT (vertical format).
+We first build a \textit{vertical index} mapping each actor to the set of transaction IDs where the actor appears.
+For an itemset $X$, its support is computed as the size of the intersection of the corresponding transaction-ID sets.
+This makes support counting efficient compared to repeated scans over all baskets.
+
+In practice, we mine:
+\begin{itemize}
+  \item frequent 1-itemsets (single actors) with a chosen minimum support;
+  \item frequent 2-itemsets (actor pairs) by intersecting transaction sets.
+\end{itemize}
+
+\section{Scalability with Data Size}
+The key idea supporting scalability is the vertical representation: once actor-to-transaction sets are built, support for candidate itemsets can be computed using set intersections.
+We empirically evaluate scaling by running the same pipeline on different dataset sizes ($N \in \{200,400,800,1000\}$), measuring runtime and the number of frequent itemsets found.
+
+\section{Experiments}
+We run experiments using the full preprocessing and mining pipeline.
+For frequent single actors, we use an absolute minimum support threshold.
+For pairs, we use a lower threshold to avoid empty outputs (pairs are naturally rarer than singletons).
+
+\subsection{Results}
+Table~\ref{tab:scaling} reports the number of unique actors, frequent 1-itemsets, frequent pairs, and runtime for different values of $N$.
+We also plot runtime vs dataset size.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrr}
+\toprule
+$N$ & unique actors & frequent singles & frequent pairs & time (s) \\
+\midrule
+200  & 703  & 16  & 2  & 0.0001 \\
+400  & 1292 & 72  & 12 & 0.0008 \\
+800  & 2268 & 204 & 42 & 0.0059 \\
+1000 & 2709 & 271 & 63 & 0.0103 \\
+\bottomrule
+\end{tabular}
+\caption{Scaling experiment results.}
+\label{tab:scaling}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\linewidth]{runtime_plot.png}
+\caption{Runtime vs dataset size.}
+\label{fig:runtime}
+\end{figure}
+
+\section{Discussion}
+As $N$ increases, the number of unique actors grows, which increases the number of potential candidates.
+At the same time, we observe more frequent itemsets and a clear increase in runtime.
+Although the dataset is relatively small (1000 movies), the trend is consistent with the expected behavior of frequent itemset mining: larger datasets produce larger search spaces, while the vertical representation keeps support computations efficient via set intersections.
+
+We also observe that frequent triples are rare in this dataset setting.
+Since each basket contains only four actors, the probability that the exact same triple appears multiple times is low, especially with non-trivial support thresholds.
+
+\section{Reproducibility}
+All code is provided in a single Jupyter notebook.
+The notebook downloads the dataset using the Kaggle API, performs preprocessing, mines frequent itemsets, and reproduces the experiments.
+To run the notebook, Kaggle credentials are required; in the public version, placeholders are used to avoid exposing sensitive information.
+
+\end{document}
