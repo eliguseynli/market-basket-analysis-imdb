@@ -1,27 +1,30 @@
 # Market-Basket Analysis on IMDB Top 1000 Movies
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eliguseynli/market-basket-analysis-imdb/blob/main/market_basket_analysis_imdb.ipynb)
 
-This project implements a frequent itemset mining system using the IMDB Top 1000 Movies dataset (Kaggle, CC0 license).
+This project implements a market-basket analysis system using the IMDB Top 1000 Movies dataset (Kaggle, CC0 license).
 
 Each movie is treated as a transaction (basket), and actors listed under Star1–Star4 are treated as items.
+
+The implementation is aligned with the course methodologies and is based on Apache Spark (PySpark) using distributed DataFrame transformations.
 
 The project includes:
 - Data download via Kaggle API
 - Pre-processing and basket construction
-- Vertical-format frequent itemset mining (ECLAT-style)
+- Frequent single and pair itemset counting using Spark (explode, groupBy, count)
 - Scalability experiments on increasing dataset sizes
 - Runtime analysis and discussion
 
 ## Method Overview
 
-We build a vertical index mapping each actor to the set of transaction IDs in which the actor appears.
+The dataset is loaded into a Spark DataFrame. 
 
-Frequent itemsets are computed by intersecting transaction-ID sets, avoiding repeated full scans of the dataset.
+Frequent single actors are computed using:
+- `explode` to flatten actor arrays
+- `groupBy().count()` for support computation
 
-We analyze:
-- Frequent single actors
-- Frequent actor pairs
-- Scalability as dataset size increases
+Frequent pairs are generated per transaction and counted using Spark aggregations, following a MapReduce-style counting pattern implemented via Spark transformations.
+
+Scalability is evaluated by running the pipeline on different dataset sizes and measuring runtime.
 
 ## Running the Notebook
 
@@ -30,10 +33,11 @@ To run the notebook:
 1. Provide Kaggle API credentials (username and key).
 2. Run all cells.
 3. The dataset will be downloaded automatically.
-4. Results and runtime analysis will be reproduced.
+4. All Spark-based experiments will be reproduced.
 
 ## Repository Structure
-- `market_basket_imdb.ipynb`
+
+- `market_basket_analysis_imdb.ipynb`
 - `report/report.tex`
 - `report/report.pdf`
 - `report/runtime_plot.png`
@@ -43,3 +47,4 @@ To run the notebook:
 
 The dataset is downloaded directly from Kaggle using the Kaggle API.
 Sensitive credentials are not included in the public version.
+The notebook is executable on Google Colab via the badge above.
