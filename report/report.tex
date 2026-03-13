@@ -6,7 +6,7 @@
 \usepackage{hyperref}
 \usepackage{amsmath}
 
-\title{Market-Basket Analysis on the IMDB Top 1000 Movies Dataset}
+\title{Spark-Based Market-Basket Analysis using the Apriori Principle on the IMDB Top 1000 Movies Dataset}
 \author{Ali Huseynli (65399A)}
 \date{\today}
 
@@ -36,17 +36,31 @@ We apply minimal preprocessing:
     \item Remove duplicates inside a basket (defensive step) and sort the actors in each basket for consistency.
 \end{itemize}
 
-\section{Algorithm and Implementation (Course Technique: Spark)}
-To align with the requirement of applying techniques studied in the course, the mining procedure is implemented using Spark DataFrame transformations and aggregations.
+\section{Algorithm and Implementation (Spark + Apriori Principle)}
 
-\subsection{Frequent singles}
-Frequent single actors are computed by exploding the actor array and using \texttt{groupBy(actor).count()} to obtain support counts.
+To align with the requirement of applying techniques studied in the course, the mining pipeline is implemented using Apache Spark (PySpark). The algorithmic logic follows the Apriori principle for candidate pruning.
+
+\subsection{Frequent singletons}
+
+First, we compute the support of all individual actors (singletons). This is done by exploding the actor array and using a Spark aggregation:
+
+\texttt{explode(actors) → groupBy(actor).count()}
+
+Actors whose support is greater than or equal to the minimum support threshold are retained as frequent singletons.
+
+\subsection{Apriori candidate pruning}
+
+The Apriori algorithm exploits the monotonicity (downward closure) property: if an itemset is frequent, then all of its subsets must also be frequent.
+
+Using this property, candidate pairs are generated only from actors that are frequent as singletons. In other words, before generating pairs, each basket is filtered so that it contains only frequent actors. This avoids considering pairs that cannot possibly be frequent.
 
 \subsection{Frequent pairs}
-For each transaction, we generate all actor pairs (2-combinations) and count them across the dataset using Spark \texttt{groupBy(pair).count()}. This corresponds to a MapReduce-style counting pattern implemented via Spark transformations and aggregations.
+
+After filtering transactions using the frequent singleton set, candidate actor pairs are generated from the remaining actors in each basket. Support for these candidate pairs is then computed using Spark transformations. Candidate pairs are generated within each transaction and their support is aggregated across the dataset using distributed counting operations.
 
 \subsection{Support}
-For an itemset $X$, support is defined as the number of transactions containing $X$. We report supports as absolute counts and use a minimum support threshold for filtering frequent pairs.
+
+For an itemset $X$, support is defined as the number of transactions containing $X$. In this project we use an absolute minimum support threshold of 2.
 
 \section{Scalability with Data Size}
 We evaluate how the proposed solution behaves as the dataset size increases by running the same Spark-based pipeline on different numbers of transactions:
@@ -89,7 +103,9 @@ $N$ & Unique Actors & Frequent Singles ($\geq 2$) & Frequent Pairs ($\geq 2$) & 
 \section{Discussion}
 As expected, increasing $N$ increases the number of unique actors and the number of frequent itemsets found, since more transactions provide more opportunities for repeated co-occurrences.
 
-Regarding runtime, results are influenced by Spark execution overhead (session warm-up, job scheduling, and JVM-related costs). In practice, the first run may be slower, and subsequent runs can benefit from already-initialized execution components. Despite this overhead, the experiment demonstrates that the mining pipeline can be expressed as scalable distributed operations (Spark transformations and aggregations), which is consistent with the course focus.
+Regarding runtime, results are influenced by Spark execution overhead (session warm-up, job scheduling, and JVM-related costs). In practice, the first run may be slower, and subsequent runs can benefit from already-initialized execution components. Despite this overhead, the experiment demonstrates that the mining pipeline can be expressed as scalable distributed operations (Spark transformations and aggregations), which is consistent with the course focus. 
+Additionally, the use of the Apriori principle reduces the search space by generating candidate pairs only from frequent singletons. This pruning step avoids unnecessary pair evaluations and aligns the implementation with the classical market-basket analysis approach.This approach significantly reduces the number of candidate itemsets compared to a brute-force enumeration of all possible pairs.
+
 
 \section{Reproducibility}
 The full pipeline is implemented in a single Jupyter notebook executable on Google Colab. The dataset is downloaded via the Kaggle API. In the public version, Kaggle credentials are not exposed and placeholders are used.
