@@ -19,7 +19,8 @@ The project includes:
 
 ## Method Overview
 
-The dataset is loaded into a Spark DataFrame. 
+The dataset is loaded into a Spark DataFrame.
+An absolute minimum support threshold of 2 is used in the experiments.
 
 Frequent single actors are computed using:
 - `explode` to flatten actor arrays
