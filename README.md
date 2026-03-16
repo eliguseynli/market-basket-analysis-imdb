@@ -1,6 +1,6 @@
 # Spark-Based Market-Basket Analysis using the Apriori Principle on IMDB Top 1000 Movies
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eliguseynli/market-basket-analysis-imdb/blob/main/market_basket_analysis_imdb_updated.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eliguseynli/market-basket-analysis-imdb/blob/main/market_basket_analysis_imdb.ipynb)
 
 This project implements a market-basket analysis system using the IMDB Top 1000 Movies dataset (Kaggle, CC0 license).
 
